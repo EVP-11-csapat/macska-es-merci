@@ -51,4 +51,8 @@ gomb.addEventListener('click', function () {
   result.textContent = `100 000 szimulációból ${staying} alkalommal a maradás és ${switching} alkalommal a cserélés nyert.`
 });
 
+// build wont reference this correctly in css
+// workaround
+document.body.style.backgroundImage = "url('./img/background.webp')";
+
 init();
