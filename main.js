@@ -1,5 +1,35 @@
+import axios from 'axios';
 import './index.css'
 import { init } from './secret.js'
+
+function sfc32(a, b, c, d) {
+  return function() {
+    a >>>= 0; b >>>= 0; c >>>= 0; d >>>= 0; 
+    var t = (a + b) | 0;
+    a = b ^ b >>> 9;
+    b = c + (c << 3) | 0;
+    c = (c << 21 | c >>> 11);
+    d = d + 1 | 0;
+    t = t + d | 0;
+    c = c + t | 0;
+    return (t >>> 0) / 4294967296;
+  }
+}
+
+let rand = sfc32(0, 0, 0, 0);
+
+axios.get('https://random.org/integers/?num=4&format=plain&rnd=new&min=-1000000000&max=1000000000&col=1&base=10',
+{
+  headers: {
+    'Content-Type': 'text/plain',
+    'Access-Control-Allow-Origin': '*'
+  }
+})
+.then(function (response) {
+  const [a, b, c, d] = response.data.split('\n')
+  rand = sfc32(a, b, c, d)
+  console.log('Random.org API has been used');
+});
 
 function simulate() {
   const doors = [0, 1, 2]
@@ -56,3 +86,4 @@ gomb.addEventListener('click', function () {
 document.body.style.backgroundImage = "url('./img/background.webp')";
 
 init();
+// console.log(rand());
