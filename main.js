@@ -1,6 +1,23 @@
-import axios from 'axios';
 import './index.css'
 import { init } from './secret.js'
+
+function cyrb128(str) {
+  let h1 = 1779033703, h2 = 3144134277,
+      h3 = 1013904242, h4 = 2773480762;
+  for (let i = 0, k; i < str.length; i++) {
+      k = str.charCodeAt(i);
+      h1 = h2 ^ Math.imul(h1 ^ k, 597399067);
+      h2 = h3 ^ Math.imul(h2 ^ k, 2869860233);
+      h3 = h4 ^ Math.imul(h3 ^ k, 951274213);
+      h4 = h1 ^ Math.imul(h4 ^ k, 2716044179);
+  }
+  h1 = Math.imul(h3 ^ (h1 >>> 18), 597399067);
+  h2 = Math.imul(h4 ^ (h2 >>> 22), 2869860233);
+  h3 = Math.imul(h1 ^ (h3 >>> 17), 951274213);
+  h4 = Math.imul(h2 ^ (h4 >>> 19), 2716044179);
+  h1 ^= (h2 ^ h3 ^ h4), h2 ^= h1, h3 ^= h1, h4 ^= h1;
+  return [h1>>>0, h2>>>0, h3>>>0, h4>>>0];
+}
 
 function sfc32(a, b, c, d) {
   return function() {
@@ -16,32 +33,30 @@ function sfc32(a, b, c, d) {
   }
 }
 
-let rand = sfc32(0, 0, 0, 0);
+let seed = cyrb128(Date.now().toLocaleString());
 
-axios.get('https://random.org/integers/?num=4&format=plain&rnd=new&min=-1000000000&max=1000000000&col=1&base=10',
-{
-  headers: {
-    'Content-Type': 'text/plain',
-    'Access-Control-Allow-Origin': '*'
+let rand = sfc32(seed[0], seed[1], seed[2], seed[3]);
+
+function reseed() {
+  if (rand() > 0.7) {
+    seed = cyrb128(Date.now().toLocaleString());
+    rand = sfc32(seed[0], seed[1], seed[2], seed[3]);
   }
-})
-.then(function (response) {
-  const [a, b, c, d] = response.data.split('\n')
-  rand = sfc32(a, b, c, d)
-  console.log('Random.org API has been used');
-});
+}
+
 
 function simulate() {
   const doors = [0, 1, 2]
 
-  const prizeIndex = Math.floor(Math.random() * 3)
-  const playerIndex = Math.floor(Math.random() * 3)
+  const prizeIndex = Math.floor(rand() * 3)
+  const playerIndex = Math.floor(rand() * 3)
 
   let removableDoors = doors.filter((door) => (door != prizeIndex && door != playerIndex))
 
-  const removedDoor = (removableDoors.length > 1) ? removableDoors[Math.floor(Math.random() * 2)] : removableDoors[0]
+  const removedDoor = (removableDoors.length > 1) ? removableDoors[Math.floor(rand() * 2)] : removableDoors[0]
   const switchDoor = doors.filter((door) => door != playerIndex && door != removedDoor)[0]
 
+  reseed();
   if (switchDoor === prizeIndex) return true
   if (playerIndex === prizeIndex) return false
   console.log('Something went wrong')
@@ -86,4 +101,4 @@ gomb.addEventListener('click', function () {
 document.body.style.backgroundImage = "url('./img/background.webp')";
 
 init();
-// console.log(rand());
+console.log(rand());
