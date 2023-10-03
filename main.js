@@ -37,13 +37,6 @@ let seed = cyrb128(Date.now().toLocaleString());
 
 let rand = sfc32(seed[0], seed[1], seed[2], seed[3]);
 
-function reseed() {
-  if (rand() > 0.7) {
-    seed = cyrb128(Date.now().toLocaleString());
-    rand = sfc32(seed[0], seed[1], seed[2], seed[3]);
-  }
-}
-
 
 function simulate() {
   const doors = [0, 1, 2]
@@ -56,7 +49,6 @@ function simulate() {
   const removedDoor = (removableDoors.length > 1) ? removableDoors[Math.floor(rand() * 2)] : removableDoors[0]
   const switchDoor = doors.filter((door) => door != playerIndex && door != removedDoor)[0]
 
-  reseed();
   if (switchDoor === prizeIndex) return true
   if (playerIndex === prizeIndex) return false
   console.log('Something went wrong')
